@@ -1,7 +1,32 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Activity
+ *     description: Activity / audit logs for projects and tasks
+ */
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const activityController = require('../controllers/activityController');
+
+/**
+ * @swagger
+ * /api/activity/project/{projectId}:
+ *   get:
+ *     tags: [Activity]
+ *     summary: Get activity for a project
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project activity list
+ */
 
 // Get current user's activity
 router.get('/me', auth, activityController.getUserActivity);

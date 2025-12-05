@@ -8,6 +8,8 @@ const errorMiddleware = require('./middleware/errorHandler');
 const { morganMiddleware } = require('./config/logger');
 const { initializeSocket } = require('./config/socket');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 
 // Global rate limiter (basic)
 const limiter = rateLimit({
@@ -69,6 +71,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/projects/:projectId/tasks/:taskId/attachments', attachmentRoutes);
 app.use('/api/activity', activityRoutes);
+
+// Swagger UI
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
 app.use((req, res) => {

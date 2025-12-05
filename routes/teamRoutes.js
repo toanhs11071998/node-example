@@ -1,9 +1,25 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Teams
+ *     description: Team & workspace management
+ */
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const teamController = require('../controllers/teamController');
 
 // Public routes
+/**
+ * @swagger
+ * /api/teams/public:
+ *   get:
+ *     tags: [Teams]
+ *     summary: List public teams
+ *     responses:
+ *       200:
+ *         description: Public teams list
+ */
 router.get('/public', teamController.getPublicTeams);
 
 // Protected routes

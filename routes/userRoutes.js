@@ -1,9 +1,45 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Users
+ *     description: User management (admin + owner)
+ */
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { validateRequest, validateObjectId } = require('../middleware/validation');
 const auth = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     tags: [Users]
+ *     summary: Get all users (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ */
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     tags: [Users]
+ *     summary: Get user by id (owner or admin)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User found
+ */
 
 
 // GET: Lấy tất cả users (admin only)
