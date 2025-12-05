@@ -2,6 +2,7 @@ const Comment = require('../models/Comment');
 const Task = require('../models/Task');
 const User = require('../models/User');
 const notificationService = require('../services/notificationService');
+const SocketService = require('../services/socketService');
 const { successHandler, errorHandler } = require('../utils/responseHandler');
 
 // Create comment on task
@@ -42,6 +43,9 @@ exports.createComment = async (req, res) => {
       );
     }
 
+    // Emit socket event
+    SocketService.emitNewComment(task.project, req.params.taskId, comment, req.user.id);
+
     successHandler(res, 201, 'Comment created', comment);
   } catch (err) {
     errorHandler(res, 500, err.message);
@@ -80,6 +84,9 @@ exports.updateComment = async (req, res) => {
     await comment.save();
     await comment.populate('author', 'name email');
 
+    // Emit socket event
+    SocketService.emitCommentUpdate(comment.task.project || 'unknown', req.params.taskId, comment);
+
     successHandler(res, 200, 'Comment updated', comment);
   } catch (err) {
     errorHandler(res, 500, err.message);
@@ -103,6 +110,12 @@ exports.deleteComment = async (req, res) => {
     }
 
     await Comment.findByIdAndDelete(req.params.commentId);
+
+    // Emit socket event
+    if (task) {
+      SocketService.emitCommentDeleted(task.project, comment.task, req.params.commentId);
+    }
+
     successHandler(res, 200, 'Comment deleted');
   } catch (err) {
     errorHandler(res, 500, err.message);
@@ -129,6 +142,13 @@ exports.addReaction = async (req, res) => {
     }
 
     await comment.save();
+
+    // Get task project for socket emit
+    const task = await Task.findById(comment.task);
+    if (task) {
+      SocketService.emitReactionAdded(task.project, comment.task, req.params.commentId, emoji, req.user.id);
+    }
+
     successHandler(res, 200, 'Reaction added', comment);
   } catch (err) {
     errorHandler(res, 500, err.message);
@@ -153,6 +173,13 @@ exports.removeReaction = async (req, res) => {
     }
 
     await comment.save();
+
+    // Get task project for socket emit
+    const task = await Task.findById(comment.task);
+    if (task) {
+      SocketService.emitReactionRemoved(task.project, comment.task, req.params.commentId, emoji, req.user.id);
+    }
+
     successHandler(res, 200, 'Reaction removed', comment);
   } catch (err) {
     errorHandler(res, 500, err.message);

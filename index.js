@@ -2,9 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const http = require('http');
 const connectDB = require('./config/database');
 const errorMiddleware = require('./middleware/errorHandler');
 const { morganMiddleware } = require('./config/logger');
+const { initializeSocket } = require('./config/socket');
 const rateLimit = require('express-rate-limit');
 
 // Global rate limiter (basic)
@@ -83,9 +85,13 @@ if (require.main === module) {
     try {
       await connectDB();
       const PORT = process.env.PORT || 3000;
-      app.listen(PORT, () => {
+      // Create HTTP server for Socket.io
+      const server = http.createServer(app);
+      initializeSocket(server);
+      server.listen(PORT, () => {
         console.log(`Server đang chạy trên port ${PORT}`);
         console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`WebSocket ready`);
       });
     } catch (err) {
       console.error('Failed to start server', err);

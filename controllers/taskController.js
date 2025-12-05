@@ -1,6 +1,7 @@
 const Task = require('../models/Task');
 const Project = require('../models/Project');
 const notificationService = require('../services/notificationService');
+const SocketService = require('../services/socketService');
 const { successHandler, errorHandler } = require('../utils/responseHandler');
 
 // Create task
@@ -36,6 +37,9 @@ exports.createTask = async (req, res) => {
         req.user.id
       );
     }
+
+    // Emit socket event
+    SocketService.emitTaskUpdate(req.params.projectId, task._id, task, req.user.id);
 
     successHandler(res, 201, 'Task created', task);
   } catch (err) {
@@ -98,6 +102,12 @@ exports.updateTask = async (req, res) => {
           req.user.id
         );
       }
+      SocketService.emitTaskStatusChange(task.project, task._id, task, status, req.user.id);
+    }
+
+    // Emit socket event
+    if (title || description || priority || progress || dueDate) {
+      SocketService.emitTaskUpdate(task.project, task._id, task, req.user.id);
     }
 
     successHandler(res, 200, 'Task updated', task);
