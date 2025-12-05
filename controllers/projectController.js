@@ -1,5 +1,6 @@
 const Project = require('../models/Project');
 const Task = require('../models/Task');
+const activityService = require('../services/activityService');
 const { successHandler, errorHandler } = require('../utils/responseHandler');
 
 // Get all projects for user (owned or member)
@@ -52,6 +53,9 @@ exports.createProject = async (req, res) => {
 
     await project.save();
     await project.populate('owner', 'name email');
+
+    // Log activity
+    await activityService.logProjectCreated(project._id, req.user.id, name);
 
     successHandler(res, 201, 'Project created', project);
   } catch (err) {
@@ -125,6 +129,11 @@ exports.addMember = async (req, res) => {
     await project.save();
     await project.populate('members.user', 'name email');
 
+    // Log activity
+    const User = require('../models/User');
+    const member = await User.findById(userId);
+    await activityService.logMemberAdded(project._id, req.user.id, userId, member?.name || 'Unknown');
+
     successHandler(res, 200, 'Member added', project);
   } catch (err) {
     errorHandler(res, 500, err.message);
@@ -141,9 +150,15 @@ exports.removeMember = async (req, res) => {
     if (!project) return errorHandler(res, 404, 'Project not found');
     if (project.owner.toString() !== req.user.id) return errorHandler(res, 403, 'Forbidden');
 
+    const User = require('../models/User');
+    const member = await User.findById(userId);
+
     project.members = project.members.filter(m => m.user.toString() !== userId);
     await project.save();
     await project.populate('members.user', 'name email');
+
+    // Log activity
+    await activityService.logMemberRemoved(project._id, req.user.id, userId, member?.name || 'Unknown');
 
     successHandler(res, 200, 'Member removed', project);
   } catch (err) {

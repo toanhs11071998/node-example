@@ -32,6 +32,9 @@ const projectRoutes = require('./routes/projectRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const teamRoutes = require('./routes/teamRoutes');
+const attachmentRoutes = require('./routes/attachmentRoutes');
+const activityRoutes = require('./routes/activityRoutes');
 
 const app = express();
 
@@ -63,6 +66,9 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/tasks', taskRoutes);
 app.use('/api/tasks/:taskId/comments', commentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/projects/:projectId/tasks/:taskId/attachments', attachmentRoutes);
+app.use('/api/activity', activityRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -2,6 +2,7 @@ const Task = require('../models/Task');
 const Project = require('../models/Project');
 const notificationService = require('../services/notificationService');
 const SocketService = require('../services/socketService');
+const activityService = require('../services/activityService');
 const { successHandler, errorHandler } = require('../utils/responseHandler');
 
 // Create task
@@ -26,6 +27,9 @@ exports.createTask = async (req, res) => {
     await task.save();
     await task.populate('assignee', 'name email');
     await task.populate('creator', 'name email');
+
+    // Log activity
+    await activityService.logTaskCreated(req.params.projectId, task._id, req.user.id, { title, priority });
 
     // Notify assignee
     if (assignee) {
@@ -71,6 +75,13 @@ exports.updateTask = async (req, res) => {
 
     const oldStatus = task.status;
     const oldAssignee = task.assignee?.toString();
+    const oldData = {
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      progress: task.progress,
+    };
 
     if (title) task.title = title;
     if (description) task.description = description;
@@ -91,6 +102,16 @@ exports.updateTask = async (req, res) => {
     await task.populate('assignee', 'name email');
     await task.populate('creator', 'name email');
 
+    // Log activity
+    const newData = {
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      progress: task.progress,
+    };
+    await activityService.logTaskUpdated(task.project, task._id, req.user.id, oldData, newData);
+
     // Notify status change
     if (status && status !== oldStatus) {
       if (task.assignee) {
@@ -103,6 +124,8 @@ exports.updateTask = async (req, res) => {
         );
       }
       SocketService.emitTaskStatusChange(task.project, task._id, task, status, req.user.id);
+      // Log status change separately
+      await activityService.logTaskStatusChanged(task.project, task._id, req.user.id, task.title, oldStatus, status);
     }
 
     // Emit socket event
@@ -123,7 +146,14 @@ exports.deleteTask = async (req, res) => {
 
     if (!task) return errorHandler(res, 404, 'Task not found');
 
+    const taskTitle = task.title;
+    const projectId = task.project;
+
     await Task.findByIdAndDelete(req.params.taskId);
+
+    // Log activity
+    await activityService.logTaskDeleted(projectId, task._id, req.user.id, taskTitle);
+
     successHandler(res, 200, 'Task deleted');
   } catch (err) {
     errorHandler(res, 500, err.message);

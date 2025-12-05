@@ -3,6 +3,7 @@ const Task = require('../models/Task');
 const User = require('../models/User');
 const notificationService = require('../services/notificationService');
 const SocketService = require('../services/socketService');
+const activityService = require('../services/activityService');
 const { successHandler, errorHandler } = require('../utils/responseHandler');
 
 // Create comment on task
@@ -27,6 +28,9 @@ exports.createComment = async (req, res) => {
     // Increment task comment count
     task.commentCount = (task.commentCount || 0) + 1;
     await task.save();
+
+    // Log activity
+    await activityService.logCommentAdded(task.project, task._id, req.user.id, content);
 
     // Notify mentions
     for (const userId of mentions) {
@@ -110,6 +114,11 @@ exports.deleteComment = async (req, res) => {
     }
 
     await Comment.findByIdAndDelete(req.params.commentId);
+
+    // Log activity
+    if (task) {
+      await activityService.logCommentDeleted(task.project, task._id, req.user.id);
+    }
 
     // Emit socket event
     if (task) {
