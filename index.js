@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./config/database');
 const errorMiddleware = require('./middleware/errorHandler');
+const { morganMiddleware } = require('./config/logger');
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
@@ -13,6 +14,8 @@ const app = express();
 // Middleware bảo mật
 app.use(helmet());
 app.use(cors());
+// Logging
+app.use(morganMiddleware);
 
 // Middleware parse JSON
 app.use(express.json());

@@ -2,20 +2,30 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { validateRequest, validateObjectId } = require('../middleware/validation');
+const auth = require('../middleware/auth');
+const authorize = require('../middleware/authorize');
 
-// GET: Lấy tất cả users
-router.get('/', userController.getAllUsers);
 
-// GET: Lấy một user theo ID
-router.get('/:id', validateObjectId, userController.getUserById);
+// GET: Lấy tất cả users (admin only)
+router.get('/', auth, authorize(['admin']), userController.getAllUsers);
 
-// POST: Tạo user mới
-router.post('/', validateRequest, userController.createUser);
+// GET: Lấy một user theo ID (owner or admin)
+router.get('/:id', validateObjectId, auth, async (req, res, next) => {
+	// allow if admin or owner
+	if (req.user.role === 'admin' || req.user.id === req.params.id) return userController.getUserById(req, res, next);
+	return res.status(403).json({ success: false, message: 'Forbidden' });
+});
 
-// PUT: Cập nhật user
-router.put('/:id', validateObjectId, validateRequest, userController.updateUser);
+// POST: Tạo user mới (admin only)
+router.post('/', auth, authorize(['admin']), validateRequest, userController.createUser);
 
-// DELETE: Xóa user
-router.delete('/:id', validateObjectId, userController.deleteUser);
+// PUT: Cập nhật user (owner or admin)
+router.put('/:id', validateObjectId, auth, validateRequest, async (req, res, next) => {
+	if (req.user.role === 'admin' || req.user.id === req.params.id) return userController.updateUser(req, res, next);
+	return res.status(403).json({ success: false, message: 'Forbidden' });
+});
+
+// DELETE: Xóa user (admin only)
+router.delete('/:id', validateObjectId, auth, authorize(['admin']), userController.deleteUser);
 
 module.exports = router;
