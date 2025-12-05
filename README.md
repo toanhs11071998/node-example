@@ -189,14 +189,6 @@ app.use('/api/products', productRoutes);
 - `npm run dev` - Chạy development với hot reload
 - `npm test` - Chạy tests
 
-## 🤝 Các bước tiếp theo
-
-1. Thêm authentication (JWT)
-2. Thêm logging (Winston, Morgan)
-3. Thêm pagination và filtering
-4. Thêm tests (Jest, Mocha)
-5. Deploy (Heroku, AWS, DigitalOcean)
-
 ## 📄 License
 
 ISC
