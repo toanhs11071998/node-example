@@ -5,6 +5,23 @@ const helmet = require('helmet');
 const connectDB = require('./config/database');
 const errorMiddleware = require('./middleware/errorHandler');
 const { morganMiddleware } = require('./config/logger');
+const rateLimit = require('express-rate-limit');
+
+// Global rate limiter (basic)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter limiter for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // limit login/register attempts per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
@@ -16,6 +33,9 @@ app.use(helmet());
 app.use(cors());
 // Logging
 app.use(morganMiddleware);
+// Apply global limiter to all API routes
+app.use('/api', limiter);
+
 
 // Middleware parse JSON
 app.use(express.json());

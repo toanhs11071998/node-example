@@ -38,6 +38,24 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    // Security / verification fields
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+    },
+    verificationExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
@@ -63,3 +81,4 @@ userSchema.methods.toJSON = function () {
 };
 
 module.exports = mongoose.model('User', userSchema);
+
